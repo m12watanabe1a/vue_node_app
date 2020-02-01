@@ -1,0 +1,52 @@
+version: '3'
+services:
+  web:
+    container_name: "web"
+    build:
+      context: ./
+      dockerfile: ./docker/web/Dockerfile
+    links:
+      - db
+    depends_on:
+      - db
+    ports:
+      - 9050:9050
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    stdin_open: true
+    tty: true
+    hostname: webhost
+
+  db:
+    container_name: "db"
+    build: ./docker/db
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./docker/db/data:/var/lib/mysql:delegated
+      - ./docker/db/conf.d:/etc/mysql/conf.d:delegated
+      - ./config/schema:/docker-entrypoint-initdb.d:delegated
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: glucose_sensor
+      MYSQL_USER: glucose_sensor
+      MYSQL_PASSWORD: glucose_sensor
+      TZ: "Asia/Tokyo"
+    hostname: db
+
+  phpmyadmin:
+    container_name: "phpmyadmin"
+    build: ./docker/phpmyadmin
+    environment:
+      - PMA_ARBITRARY=1
+      - PMA_HOST=mysql
+      - PMA_USER=root
+      - PMA_PASSWORD=root
+    links:
+      - db:mysql
+    ports:
+      - 8080:80
+    volumes:
+      -  ./docker/phpmyadmin/sessions:/sessions:delegated
+
